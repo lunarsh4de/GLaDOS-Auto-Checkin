@@ -3,7 +3,7 @@ name: Quya Daily Check-in
 on:
   workflow_dispatch:
   schedule:
-    - cron: "5 1 * * *"
+    - cron: "0 4 * * *"
 
 concurrency:
   group: quya-daily-checkin
