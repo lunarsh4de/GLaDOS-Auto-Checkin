@@ -4,6 +4,8 @@
 import json
 import os
 import sys
+from argparse import ArgumentParser
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -103,9 +105,35 @@ def check_account(email: str, password: str, probe_only: bool) -> str:
         return "checked_in_now"
 
 
+def write_report(path: str | None, accounts: list[dict[str, Any]]) -> None:
+    if not path:
+        return
+    destination = Path(path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(
+        json.dumps({"task": "quya_checkin", "accounts": accounts}, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> int:
-    accounts = load_accounts()
-    password = required_env("QUYA_PASSWORD")
+    parser = ArgumentParser(description="Run Quya daily check-in")
+    parser.add_argument(
+        "--report-path",
+        default=os.environ.get("QUYA_REPORT_PATH"),
+        help="Write a sanitized account-status report to this JSON file",
+    )
+    args = parser.parse_args()
+
+    report: list[dict[str, Any]] = []
+    try:
+        accounts = load_accounts()
+        password = required_env("QUYA_PASSWORD")
+    except Exception as error:  # noqa: BLE001
+        print(f"Configuration failed ({error})", file=sys.stderr)
+        write_report(args.report_path, report)
+        return 1
+
     probe_only = os.environ.get("QUYA_PROBE_ONLY") == "1"
     failures = 0
     for index, email in enumerate(accounts, start=1):
@@ -117,9 +145,12 @@ def main() -> int:
                 "ready": "session verified",
             }
             print(f"Account {index}: {labels[result]}")
+            report.append({"index": index, "status": result})
         except Exception as error:  # noqa: BLE001
             failures += 1
             print(f"Account {index}: failed ({error})", file=sys.stderr)
+            report.append({"index": index, "status": "failed"})
+        write_report(args.report_path, report)
     return 1 if failures else 0
 
 
