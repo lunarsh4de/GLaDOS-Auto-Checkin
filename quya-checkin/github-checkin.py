@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """Run Quya daily check-in from GitHub Actions without persisting session data."""
 
@@ -145,11 +146,23 @@ def main() -> int:
                 "ready": "session verified",
             }
             print(f"Account {index}: {labels[result]}")
-            report.append({"index": index, "status": result})
+            report.append(
+                {
+                    "index": index,
+                    "label": f"云桥账号 {index}（{email}）",
+                    "status": result,
+                }
+            )
         except Exception as error:  # noqa: BLE001
             failures += 1
             print(f"Account {index}: failed ({error})", file=sys.stderr)
-            report.append({"index": index, "status": "failed"})
+            report.append(
+                {
+                    "index": index,
+                    "label": f"云桥账号 {index}（{email}）",
+                    "status": "failed",
+                }
+            )
         write_report(args.report_path, report)
     return 1 if failures else 0
 
