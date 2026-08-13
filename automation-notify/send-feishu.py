@@ -1,3 +1,4 @@
+
 #!/usr/bin/env python3
 """Send a reusable status card through a Feishu custom-bot webhook."""
 
@@ -52,9 +53,12 @@ def quya_message(path: str) -> str:
         if not isinstance(account, dict):
             continue
         index = account.get("index")
+        display_name = account.get("label")
+        if not isinstance(display_name, str) or not display_name.strip():
+            display_name = f"云桥账号 {index}"
         status = account.get("status")
         label = QUYA_STATUS_LABELS.get(str(status), "状态未知")
-        lines.append(f"- 账号 {index}: {label}")
+        lines.append(f"- {display_name}: {label}")
     return "\n".join(lines) or "未获取到账号状态。"
 
 
@@ -140,4 +144,3 @@ if __name__ == "__main__":
     except Exception as error:  # noqa: BLE001
         print(f"Feishu notification failed: {error}", file=sys.stderr)
         raise SystemExit(1)
-
