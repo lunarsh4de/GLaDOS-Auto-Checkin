@@ -1,96 +1,95 @@
-name GLaDOS Auto Checkin
+name: GLaDOS Auto Checkin
 
-on
-  workflowdispatch  # 
-    schedule
-        - cron '0 4 * * *'   #  UTC 4 （ 12 ）
-            - cron '0 0 1 * *'   #  1 
+on:
+  workflow_dispatch:  # 手动触发
+  schedule:
+    - cron: '0 4 * * *'   # 每日 UTC 4 点签到（北京时间 12 点）
+    - cron: '0 0 1 * *'   # 每月 1 号保活空提交
 
-            jobs
-              checkin
-                  name GLaDOS 
-                      runs-on ubuntu-latest
-                          timeout-minutes 15
-                              if github.eventname = 'schedule'  github.event.schedule = '0 0 1 * *'
-                                  concurrency
-                                        group glados-checkin
-                                              cancel-in-progress false
+jobs:
+  checkin:
+    name: GLaDOS 签到
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name != 'schedule' || github.event.schedule != '0 0 1 * *'
+    concurrency:
+      group: glados-checkin
+      cancel-in-progress: false
 
-                                                  permissions
-                                                        contents read
+    permissions:
+      contents: read
 
-                                                            steps
-                                                                  - uses actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-                                                                        - name Setup Python
-                                                                                uses actions/setup-python@v5
-                                                                                        with
-                                                                                                  python-version '3.11'
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-                                                                                                        - name Install dependencies
-                                                                                                                run pip install "requests==2.32.3" --no-cache-dir
+      - name: Install dependencies
+        run: pip install "requests==2.32.3" --no-cache-dir
 
-                                                                                                                      - name Run checkin
-                                                                                                                              id gladoscheckin
-                                                                                                                                      continue-on-error true
-                                                                                                                                              run python checkin.py
-                                                                                                                                                      env
-                                                                                                                                                                COOKIES  secrets.COOKIES 
-                                                                                                                                                                          COOKIES2  secrets.COOKIES2 
-                                                                                                                                                                                    GLADOSREPORTPATH  runner.temp /glados-status.json
-                                                                                                                                                                                              SENDKEY  secrets.SENDKEY 
-                                                                                                                                                                                                        SERVERCHANKEY  secrets.SERVERCHANKEY 
-                                                                                                                                                                                                                  TGBOTTOKEN  secrets.TGBOTTOKEN 
-                                                                                                                                                                                                                            TGCHATID  secrets.TGCHATID 
-                                                                                                                                                                                                                                      PUSHPLUSTOKEN  secrets.PUSHPLUSTOKEN 
-                                                                                                                                                                                                                                                DINGTALKWEBHOOK  secrets.DINGTALKWEBHOOK 
-                                                                                                                                                                                                                                                          DINGTALKSECRET  secrets.DINGTALKSECRET 
-                                                                                                                                                                                                                                                                    FEISHUWEBHOOK  secrets.FEISHUWEBHOOK 
-                                                                                                                                                                                                                                                                              FEISHUSECRET  secrets.FEISHUSECRET 
-                                                                                                                                                                                                                                                                                        WECOMBOTWEBHOOK  secrets.WECOMBOTWEBHOOK 
-                                                                                                                                                                                                                                                                                                  YUNHUTOKEN  secrets.YUNHUTOKEN 
-                                                                                                                                                                                                                                                                                                            YUNHURECVID  secrets.YUNHURECVID 
-                                                                                                                                                                                                                                                                                                                      YUNHURECVTYPE  secrets.YUNHURECVTYPE 
-                                                                                                                                                                                                                                                                                                                                # #9 （；，）
-                                                                                                                                                                                                                                                                                                                                          EXCHANGEPLAN  secrets.EXCHANGEPLAN 
-                                                                                                                                                                                                                                                                                                                                                    GLADOSEXCHANGEPLAN  secrets.GLADOSEXCHANGEPLAN 
+      - name: Run checkin
+        id: glados_checkin
+        continue-on-error: true
+        run: python automation-adapters/glados-checkin.py
+        env:
+          COOKIES: ${{ secrets.COOKIES }}
+          COOKIES_2: ${{ secrets.COOKIES_2 }}
+          GLADOS_REPORT_PATH: ${{ runner.temp }}/glados-status.json
+          SENDKEY: ${{ secrets.SENDKEY }}
+          SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+          DINGTALK_WEBHOOK: ${{ secrets.DINGTALK_WEBHOOK }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+          FEISHU_SECRET: ${{ secrets.FEISHU_SECRET }}
+          WECOM_BOT_WEBHOOK: ${{ secrets.WECOM_BOT_WEBHOOK }}
+          YUNHU_TOKEN: ${{ secrets.YUNHU_TOKEN }}
+          YUNHU_RECV_ID: ${{ secrets.YUNHU_RECV_ID }}
+          YUNHU_RECV_TYPE: ${{ secrets.YUNHU_RECV_TYPE }}
+          # #9 积分兑换计划（可选；不配置则默认不兑换，不影响现有签到）
+          EXCHANGE_PLAN: ${{ secrets.EXCHANGE_PLAN }}
+          GLADOS_EXCHANGE_PLAN: ${{ secrets.GLADOS_EXCHANGE_PLAN }}
 
-                                                                                                                                                                                                                                                                                                                                                          - name Notify Feishu
-                                                                                                                                                                                                                                                                                                                                                                  if always
-                                                                                                                                                                                                                                                                                                                                                                          uses ./.github/actions/notify-automation
-                                                                                                                                                                                                                                                                                                                                                                                  env
-                                                                                                                                                                                                                                                                                                                                                                                            FEISHUWEBHOOKURL  secrets.FEISHUWEBHOOKURL 
-                                                                                                                                                                                                                                                                                                                                                                                                      FEISHUWEBHOOKSECRET  secrets.FEISHUWEBHOOKSECRET 
-                                                                                                                                                                                                                                                                                                                                                                                                              with
-                                                                                                                                                                                                                                                                                                                                                                                                                        report-path  runner.temp /glados-status.json
-                                                                                                                                                                                                                                                                                                                                                                                                                                  fallback-title GLaDOS 
-                                                                                                                                                                                                                                                                                                                                                                                                                                            fallback-status  steps.gladoscheckin.outcome 
+      - name: Notify Feishu
+        if: always()
+        uses: ./.github/actions/notify-automation
+        env:
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_SECRET: ${{ secrets.FEISHU_WEBHOOK_SECRET }}
+        with:
+          report-path: ${{ runner.temp }}/glados-status.json
+          fallback-title: GLaDOS 自动签到
+          fallback-status: ${{ steps.glados_checkin.outcome }}
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                  - name Mark check-in failure
-                                                                                                                                                                                                                                                                                                                                                                                                                                                          if steps.gladoscheckin.outcome == 'failure'
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                  run exit 1
+      - name: Mark check-in failure
+        if: steps.glados_checkin.outcome == 'failure'
+        run: exit 1
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                    keepalive
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        name 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            if github.eventname == 'schedule' && github.event.schedule == '0 0 1 * *'
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                runs-on ubuntu-latest
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    timeout-minutes 5
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        concurrency
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              group glados-keepalive
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    cancel-in-progress false
+  keepalive:
+    name: 每月空提交保活
+    if: github.event_name == 'schedule' && github.event.schedule == '0 0 1 * *'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    concurrency:
+      group: glados-keepalive
+      cancel-in-progress: false
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        permissions
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              contents write
+    permissions:
+      contents: write
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  steps
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        - uses actions/checkout@v4
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                with
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          fetch-depth 1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                - name 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        run 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  git config user.name "github-actionsbot"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            git config user.email "github-actionsbot@users.noreply.github.com"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      git commit --allow-empty -m "chore keepalive to prevent workflow suspension"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                git push
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+      - name: 创建空提交并推送
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit --allow-empty -m "chore: keepalive to prevent workflow suspension"
+          git push
