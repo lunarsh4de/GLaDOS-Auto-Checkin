@@ -34,6 +34,7 @@ jobs:
         run: python checkin.py
         env:
           COOKIES: ${{ secrets.COOKIES }}
+          COOKIES_2: ${{ secrets.COOKIES_2 }}
           SENDKEY: ${{ secrets.SENDKEY }}
           SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
