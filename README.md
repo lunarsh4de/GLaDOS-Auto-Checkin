@@ -108,6 +108,13 @@ koa:sess=xxxxxx; koa:sess.sig=yyyyyy
 
 ## 👥 多账号配置
 
+若仓库已经配置了 `COOKIES`，新增账号时推荐创建独立的仓库 Secret：
+
+- **Name**：`COOKIES_2`
+- **Value**：新账号的完整 Cookie
+
+工作流会自动合并 `COOKIES` 与 `COOKIES_2`，不会覆盖原账号。
+
 多个账号的 Cookie 用 `|||`、`&` 或**换行**连接（三种分隔符均可混用，推荐使用 `|||` 以避免与 Cookie 值冲突）：
 
 ```
