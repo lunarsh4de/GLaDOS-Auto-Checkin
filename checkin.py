@@ -654,10 +654,16 @@ def checkin_account(
 
 
 # ==================== 主流程 ====================
+def load_cookies() -> List[str]:
+    # H2：支持独立 Secrets 及 |||、换行(\n)、& 分隔的多账号 Cookie。
+    # COOKIES_2 便于新增账号时保留不可读取的既有 GitHub Secret。
+    raw_values = [os.getenv("COOKIES", ""), os.getenv("COOKIES_2", "")]
+    raw = "|||".join(value.strip() for value in raw_values if value.strip())
+    return [c.strip() for c in re.split(r"\|\|\||[&\n]", raw) if c.strip()]
+
+
 def main() -> int:
-    # H2：支持 ||| 或换行(\n)或 & 分隔多账号 Cookie；推荐使用 ||| 避免与 Cookie 值冲突
-    raw = os.getenv("COOKIES", "")
-    cookies = [c.strip() for c in re.split(r"\|\|\||[&\n]", raw) if c.strip()]
+    cookies = load_cookies()
 
     # #9：积分兑换计划（可选，默认关闭；仅显式配置且值合法时启用，避免静默消耗积分）
     raw_plan = (os.getenv("EXCHANGE_PLAN") or os.getenv("GLADOS_EXCHANGE_PLAN") or "").strip()
