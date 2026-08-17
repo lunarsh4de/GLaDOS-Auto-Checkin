@@ -1,42 +1,54 @@
+name Quya Daily Check-in
 
-name: Quya Daily Check-in
+on
+  workflowdispatch
+    schedule
+        - cron "0 4 * * *"
 
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "0 4 * * *"
+        concurrency
+          group quya-daily-checkin
+            cancel-in-progress false
 
-concurrency:
-  group: quya-daily-checkin
-  cancel-in-progress: false
+            permissions
+              contents read
 
-permissions:
-  contents: read
+              jobs
+                checkin
+                    name Quya check-in
+                        runs-on ubuntu-latest
+                            timeout-minutes 10
+                                env
+                                      FEISHUWEBHOOKURL  secrets.FEISHUWEBHOOKURL 
+                                            FEISHUWEBHOOKSECRET  secrets.FEISHUWEBHOOKSECRET 
 
-jobs:
-  checkin:
-    name: Quya check-in
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
+                                                steps
+                                                      - uses actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+                                                            - uses actions/setup-python@v5
+                                                                    with
+                                                                              python-version "3.11"
 
-      - name: Install dependency
-        run: python -m pip install "requests==2.32.3" --no-cache-dir
+                                                                                    - name Install dependency
+                                                                                            run python -m pip install "requests==2.32.3" --no-cache-dir
 
-      - name: Check in
-        id: quya_checkin
-        continue-on-error: true
-        env:
-          QUYA_ACCOUNTS: ${{ secrets.QUYA_ACCOUNTS }}
-          QUYA_PASSWORD: ${{ secrets.QUYA_PASSWORD }}
-          QUYA_REPORT_PATH: ${{ runner.temp }}/quya-status.json
-        run: python quya-checkin/github-checkin.py
+                                                                                                  - name Check in
+                                                                                                          id quyacheckin
+                                                                                                                  continue-on-error true
+                                                                                                                          env
+                                                                                                                                    QUYAACCOUNTS  secrets.QUYAACCOUNTS 
+                                                                                                                                              QUYAPASSWORD  secrets.QUYAPASSWORD 
+                                                                                                                                                        QUYAREPORTPATH  runner.temp /quya-status.json
+                                                                                                                                                                run python quya-checkin/github-checkin.py
 
-      - name: Mark check-in failure
-        if: steps.quya_checkin.outcome == 'failure'
-        run: exit 1
+                                                                                                                                                                      - name Notify Feishu
+                                                                                                                                                                              if always
+                                                                                                                                                                                      uses ./.github/actions/notify-automation
+                                                                                                                                                                                              with
+                                                                                                                                                                                                        report-path  runner.temp /quya-status.json
+                                                                                                                                                                                                                  fallback-title 
+                                                                                                                                                                                                                            fallback-status  steps.quyacheckin.outcome 
+
+                                                                                                                                                                                                                                  - name Mark check-in failure
+                                                                                                                                                                                                                                          if steps.quyacheckin.outcome == 'failure'
+                                                                                                                                                                                                                                                  run exit 1
+                                                                                                                                                                                                                                                  

@@ -1,0 +1,39 @@
+name Notify automation status
+description Send a task-status-v1 report through the shared Feishu bot
+
+inputs
+  report-path
+      description Path to the task-status-v1 JSON report
+          required true
+            fallback-title
+                description User-facing title used when the task did not create a report
+                    required true
+                      fallback-status
+                          description Final GitHub Actions step outcome
+                              required false
+                                  default failure
+
+                                  runs
+                                    using composite
+                                      steps
+                                          - shell bash
+                                                env
+                                                        REPORTPATH  inputs.report-path 
+                                                                FALLBACKTITLE  inputs.fallback-title 
+                                                                        FALLBACKSTATUS  inputs.fallback-status 
+                                                                              run 
+                                                                                      if  -z "FEISHUWEBHOOKURL-"  then
+                                                                                                echo "Feishu webhook is not configured notification skipped."
+                                                                                                          exit 0
+                                                                                                                  fi
+                                                                                                                  
+                                                                                                                          notifier="GITHUBACTIONPATH/../../../automation-notify/send-feishu.py"
+                                                                                                                                  if  -f "REPORTPATH"  then
+                                                                                                                                            python "notifier" --report "REPORTPATH"
+                                                                                                                                                    else
+                                                                                                                                                              python "notifier" 
+                                                                                                                                                                          --title "FALLBACKTITLE" 
+                                                                                                                                                                                      --status "FALLBACKSTATUS" 
+                                                                                                                                                                                                  --message "-  ，查 GitHub Actions "
+                                                                                                                                                                                                          fi
+                                                                                                                                                                                                          "

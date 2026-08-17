@@ -1,0 +1,38 @@
+
+  "schema" "https//json-schema.org/draft/2020-12/schema"
+    "id" "https//example.invalid/task-status-v1.schema.json"
+      "title" "Automation task status v1"
+        "type" "object"
+          "additionalProperties" false
+            "required" "version" "task" "status" "items"
+              "properties" 
+                  "version" "const" 1
+                      "task" 
+                            "type" "object"
+                                  "additionalProperties" false
+                                        "required" "id" "name"
+                                              "properties" 
+                                                      "id" "type" "string" "minLength" 1 "maxLength" 200
+                                                              "name" "type" "string" "minLength" 1 "maxLength" 200
+                                                                    
+                                                                        
+                                                                            "status" 
+                                                                                  "enum" "success" "failure" "cancelled" "skipped" "running" "needsattention"
+                                                                                      
+                                                                                          "summary" "type" "string" "minLength" 1 "maxLength" 200
+                                                                                              "items" 
+                                                                                                    "type" "array"
+                                                                                                          "maxItems" 50
+                                                                                                                "items" 
+                                                                                                                        "type" "object"
+                                                                                                                                "additionalProperties" false
+                                                                                                                                        "required" "label" "status"
+                                                                                                                                                "properties" 
+                                                                                                                                                          "label" "type" "string" "minLength" 1 "maxLength" 200
+                                                                                                                                                                    "status" "type" "string" "minLength" 1 "maxLength" 200
+                                                                                                                                                                            
+                                                                                                                                                                                  
+                                                                                                                                                                                      
+                                                                                                                                                                                        
+
+                                                                                                                                                                                        
