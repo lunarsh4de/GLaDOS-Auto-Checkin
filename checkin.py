@@ -55,6 +55,9 @@ COOKIE_MASK_LENGTH = 10
 # 前后各显示 10 个字符，因此长度必须 > 2*COOKIE_MASK_LENGTH + 3 = 23 才能安全脱敏，
 # 设为 24 可避免 len∈[21,23] 时前后片段重叠导致几乎暴露完整 Cookie（M3）。
 COOKIE_MIN_LENGTH = 24
+# GLaDOS currently uses `gld:sess`; older sessions used `koa:sess`.
+# Accept both names because the Cookie header is forwarded unchanged.
+SESSION_COOKIE_NAMES = ("gld:sess", "koa:sess")
 # 重复签到判定关键词（L5：提升为模块级常量，便于维护/国际化）
 REPEAT_KEYWORDS = ("repeat", "already", "重复", "已签到", "签到过", "请勿")
 # 积分兑换计划（#9 功能请求）：消耗 points 积分兑换 days 天会员。
@@ -174,10 +177,11 @@ def validate_cookie(cookie: str) -> Tuple[bool, str]:
         return False, "Cookie 为空"
     cookie = cookie.strip()
     keys = {part.split("=", 1)[0].strip() for part in cookie.split(";") if part.strip()}
-    if "koa:sess" not in keys:
-        return False, "Cookie 缺少必要字段: koa:sess"
-    if "koa:sess.sig" not in keys:
-        return False, "Cookie 缺少必要字段: koa:sess.sig"
+    session_name = next((name for name in SESSION_COOKIE_NAMES if name in keys), None)
+    if session_name is None:
+        return False, "Cookie 缺少必要字段: gld:sess 或 koa:sess"
+    if f"{session_name}.sig" not in keys:
+        return False, f"Cookie 缺少必要字段: {session_name}.sig"
     return True, ""
 
 

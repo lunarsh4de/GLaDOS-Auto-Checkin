@@ -49,10 +49,10 @@
 
 示例：
 ```
-koa:sess=xxxxxx; koa:sess.sig=yyyyyy
+gld:sess=xxxxxx; gld:sess.sig=yyyyyy
 ```
 
-⚠️ **必须是完整的一整段**
+⚠️ **必须是完整的一整段**。旧版账号可能仍使用 `koa:sess` / `koa:sess.sig`，两种格式都支持。
 
 ---
 
