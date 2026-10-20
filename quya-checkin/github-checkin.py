@@ -12,7 +12,9 @@ from typing import Any
 import requests
 
 API_BASE = "https://api.quya.org/api/v1"
-POINTS_BASE = "https://www.quya.org"
+# The old www.quya.org host redirects POST with HTTP 301, which requests
+# follows as GET. Use the points site's canonical host to preserve the method.
+POINTS_BASE = "https://www.yunqiao.me"
 TIMEOUT = (10, 30)
 
 
@@ -40,6 +42,8 @@ def load_accounts() -> list[str]:
 
 
 def response_json(response: requests.Response, operation: str) -> dict[str, Any]:
+    if 300 <= response.status_code < 400:
+        raise RuntimeError(f"{operation} was redirected; update its service URL")
     response.raise_for_status()
     try:
         body = response.json()
@@ -96,6 +100,7 @@ def check_account(email: str, password: str, probe_only: bool) -> str:
                 f"{POINTS_BASE}/api/user/points/checkin",
                 json={},
                 timeout=TIMEOUT,
+                allow_redirects=False,
             ),
             "Check-in",
         )
