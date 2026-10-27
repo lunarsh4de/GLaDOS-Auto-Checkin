@@ -42,9 +42,9 @@
 
 ### 第二步：获取 GLaDOS Cookie
 
-1. 打开浏览器，登录 https://glados.cloud
+1. 打开浏览器，登录 https://glados.rocks
 2. 按 **F12** 打开开发者工具
-3. 找到 `Application` → `Cookies` → `glados.cloud`
+3. 找到 `Application` → `Cookies` → `glados.rocks`
 4. 复制完整 Cookie 内容
 
 示例：
