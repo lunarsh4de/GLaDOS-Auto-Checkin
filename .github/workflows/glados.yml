@@ -37,6 +37,7 @@ jobs:
         env:
           COOKIES: ${{ secrets.COOKIES }}
           COOKIES_2: ${{ secrets.COOKIES_2 }}
+          GLADOS_USER_AGENT: ${{ secrets.GLADOS_USER_AGENT }}
           GLADOS_REPORT_PATH: ${{ runner.temp }}/glados-status.json
           SENDKEY: ${{ secrets.SENDKEY }}
           SERVERCHAN_KEY: ${{ secrets.SERVERCHAN_KEY }}

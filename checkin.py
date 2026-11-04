@@ -28,13 +28,16 @@ logger = logging.getLogger("GLaDOS")
 # ==================== 配置 ====================
 GLADOS_BASE_URL = "https://glados.rocks"
 CHECKIN_URL = f"{GLADOS_BASE_URL}/api/user/checkin"
+CHALLENGE_URL = f"{CHECKIN_URL}/challenge"
+CHECKIN_PROOF_CONTEXT = "glados-observe-v1"
+CHECKIN_CHALLENGE_WAIT = 2.5
 STATUS_URL = f"{GLADOS_BASE_URL}/api/user/status"
 POINTS_URL = f"{GLADOS_BASE_URL}/api/user/points"
 EXCHANGE_URL = f"{GLADOS_BASE_URL}/api/user/exchange"
 HEADERS_BASE = {
     "origin": GLADOS_BASE_URL,
     "referer": f"{GLADOS_BASE_URL}/console/checkin",
-    "user-agent": (
+    "user-agent": os.getenv("GLADOS_USER_AGENT") or (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
         "Chrome/120.0.0.0 Safari/537.36"
@@ -518,8 +521,16 @@ def classify_checkin(code: Any, message: str) -> str:
 
 @retry_on_failure()
 def checkin_request(session: requests.Session, headers: Dict[str, str]) -> Dict[str, Any]:
-    """执行签到请求（带重试）"""
-    r = session.post(CHECKIN_URL, headers=headers, json=PAYLOAD, timeout=TIMEOUT)
+    """按网站当前流程获取一次性校验，再执行签到（重试时重新取校验）。"""
+    challenge = api_get(session, CHALLENGE_URL, headers)
+    nonce = challenge.get("nonce")
+    if challenge.get("code") != 0 or not isinstance(nonce, str) or not nonce:
+        raise RuntimeError("无法获取签到校验，请重新登录并检查账号状态")
+    # Match the first-party console's solveChallenge/checkinProof protocol.
+    time.sleep(CHECKIN_CHALLENGE_WAIT)
+    proof = hashlib.sha256(f"{nonce}.{CHECKIN_PROOF_CONTEXT}".encode("utf-8")).hexdigest()
+    payload = {**PAYLOAD, "nonce": nonce, "proof": proof}
+    r = session.post(CHECKIN_URL, headers=headers, json=payload, timeout=TIMEOUT)
     r.raise_for_status()
     return require_json(r)  # 非 JSON 响应抛异常进入重试（M1）
 
